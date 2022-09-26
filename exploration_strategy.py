@@ -1,6 +1,8 @@
 import random
 import torch
 
+from snakeMDP import Action
+
 
 class EpsilonGreedyPolicy:
 
@@ -12,6 +14,8 @@ class EpsilonGreedyPolicy:
         rand = random.random()
         if rand > self.epsilon:
             with torch.no_grad():
-                return policy_network(state).max(1)[1].view(1, 1)[0]
+                prediction = policy_network(state).max(1)[1].view(1, 1).item()
+                action = Action(prediction)
         else:
-            return torch.tensor([random.randrange(4)], device=policy_network.device(), dtype=torch.long)
+            action = Action(random.randrange(4))
+        return action

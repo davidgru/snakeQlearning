@@ -1,6 +1,6 @@
 import numpy as np
 from collections import deque, namedtuple
-from enum import Enum
+from enum import IntEnum
 
 EMPTY_ID = 0
 BODY_ID = 1
@@ -8,7 +8,18 @@ HEAD_ID = 2
 FOOD_ID = 3
 
 State = namedtuple('State', 'world head_y head_x body')
-Action = Enum('Action', 'LEFT RIGHT DOWN UP')
+Action = IntEnum('Action', 'LEFT RIGHT DOWN UP')
+
+class Action(IntEnum):
+    LEFT = 0
+    RIGHT = 1
+    DOWN = 2
+    UP = 3
+
+
+def get_action(n):
+    if n == 0:
+        return Action.LEFT
 
 class SnakeMDP:
 
@@ -21,7 +32,7 @@ class SnakeMDP:
 
 
     def sample_start_state(self):
-        world = np.zeros(shape=(self.height, self.width))
+        world = np.zeros(shape=(self.height, self.width), dtype=np.float32)
         start_y = np.random.randint(self.height)
         start_x = np.random.randint(self.width)
         world[start_y, start_x] = HEAD_ID
@@ -77,7 +88,7 @@ class SnakeMDP:
             head_x  += 1
         elif action == Action.DOWN:
             head_y += 1
-        elif action == Action.RIGHT:
+        elif action == Action.UP:
             head_y -= 1
         else:
             raise "Invalid Action!"

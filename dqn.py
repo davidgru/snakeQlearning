@@ -25,8 +25,7 @@ class DQN(nn.Module):
 
     def forward(self, x):
         x = x.to(self.device)
-        x = nn.ReLU(self.conv1(x))
-        x = nn.ReLU(self.conv2(x))
-        x = nn.ReLU(self.conv3(x))
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
         return self.dense1(x.view(x.size(0), -1))
-        
