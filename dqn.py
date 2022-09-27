@@ -17,10 +17,10 @@ class DQN(nn.Module):
         if self.height != 10 or self.width != 10:
             raise "Height and width are fixed for now!"
 
-        self.conv1 = nn.Conv2d(1, 4, kernel_size=3, stride=1)
-        self.conv2 = nn.Conv2d(4, 8, kernel_size=3, stride=1)
-        self.conv3 = nn.Conv2d(8, 8, kernel_size=3, stride=1)
-        self.dense1 = nn.Linear(4*4*8, 4) # Output 4 Actions (left, right, up, down)
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=1, padding=2)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2)
+        self.dense1 = nn.Linear(10*10*64, 4) # Output 4 Actions (left, right, up, down)
 
 
     def forward(self, x):

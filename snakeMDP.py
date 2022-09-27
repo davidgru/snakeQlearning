@@ -2,7 +2,7 @@ import numpy as np
 from collections import deque, namedtuple
 from enum import IntEnum
 
-EMPTY_ID = 0
+EMPTY_ID = -0.1
 BODY_ID = 1
 HEAD_ID = 2
 FOOD_ID = 3
@@ -32,7 +32,7 @@ class SnakeMDP:
 
 
     def sample_start_state(self):
-        world = np.zeros(shape=(self.height, self.width), dtype=np.float32)
+        world = np.full(shape=(self.height, self.width), fill_value=EMPTY_ID, dtype=np.float32)
         start_y = np.random.randint(self.height)
         start_x = np.random.randint(self.width)
         world[start_y, start_x] = HEAD_ID
@@ -104,12 +104,12 @@ class SnakeMDP:
     def _place_food(self, world):
         """Find a free spot for the food"""
 
-        num_zeros = world.size - np.count_nonzero(world)
-        food_index = np.random.randint(num_zeros)
+        num_empty = (world < 0).sum()
+        food_index = np.random.randint(num_empty)
         zero_count = 0
         for y in range(world.shape[0]):
             for x in range(world.shape[1]):
-                if world[y, x] == 0:
+                if world[y, x] < 0:
                     if zero_count == food_index:
                         world[y, x] = FOOD_ID
                         return world
