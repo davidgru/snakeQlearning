@@ -58,7 +58,7 @@ class SnakeMDP:
         new_world[new_head_y, new_head_x] = HEAD_ID
         new_world[head_y, head_x] = BODY_ID
 
-        if world[new_head_y, new_head_x] == FOOD_ID:
+        if self._found_food(world, new_head_y, new_head_x):
             self._place_food(new_world)
         else:
             back_y, back_x = new_body.pop()
@@ -74,9 +74,9 @@ class SnakeMDP:
         new_head_y, new_head_x = self.find_next_head_pos(head_y, head_x, action)
         if self._crashed(world, new_head_y, new_head_x, body):
             return self.death_reward
-        if world[new_head_y,new_head_x] == FOOD_ID:
-            return self.food_reward
-        return self.time_penalty
+        if self._found_food(world, new_head_y, new_head_x):
+            return self.food_reward * len(body)
+        return self.food_reward * (len(body) - 1)
 
 
     def find_next_head_pos(self, head_y, head_x, action):
@@ -98,7 +98,15 @@ class SnakeMDP:
     def _crashed(self, world, head_y, head_x, body):
         if not (0 <= head_y < self.height and 0 <= head_x < self.width):
             return True
-        return body and world[head_y,head_x] == BODY_ID and (head_y, head_x) != body[-1]
+        if len(body) == 1:
+            return False
+        if np.isclose(world[head_y,head_x], BODY_ID, atol=0.1):
+            if len(body) == 2:
+                return True
+            return (head_y, head_x) != body[-1]
+
+    def _found_food(self, world, head_y, head_x):
+        return np.isclose(world[head_y,head_x], FOOD_ID, atol=0.1)
 
 
     def _place_food(self, world):
