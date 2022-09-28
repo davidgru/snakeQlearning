@@ -75,8 +75,8 @@ class SnakeMDP:
         if self._crashed(world, new_head_y, new_head_x, body):
             return self.death_reward
         if self._found_food(world, new_head_y, new_head_x):
-            return self.food_reward * len(body)
-        return self.food_reward * (len(body) - 1)
+            return self.food_reward
+        return self.time_penalty
 
 
     def find_next_head_pos(self, head_y, head_x, action):

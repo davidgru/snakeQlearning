@@ -9,7 +9,8 @@ import torch.optim as optim
 
 from display import Display
 from dqn import DQN
-from exploration_strategy import EpsilonGreedyPolicy
+from exploration_strategy import epsilon_greedy
+from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
 from snakeMDP import Action, SnakeMDP
 
@@ -17,21 +18,23 @@ HEIGHT = 10
 WIDTH = 10
 TILE_SIZE = 40
 
-EXPLORATION_RATE = 0.1
+EXPLORATION_RATE = 0.9
 DISCOUNT_FACTOR = 0.9
-LEARNING_RATE = 0.0001
-BATCH_SIZE = 256
-TARGET_UPDATE_INTERVAL = 50
+LEARNING_RATE = 0.001
+BATCH_SIZE = 512
+TARGET_UPDATE_INTERVAL = 500
 REPLAY_MEMORY_SIZE = 1000000
+
+# hyperparameters are changeable at runtime via commandline
+# example: \>set exploration_rate 0.2
+hyperparams = Hyperparameters(exploration_rate=EXPLORATION_RATE, discount_factor=DISCOUNT_FACTOR, update_interval=TARGET_UPDATE_INTERVAL, slow='False')
 
 
 # use qpu if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-print(device.type)
-
 # create snake mdp
-snake = SnakeMDP(HEIGHT, WIDTH, 100.0, -1.0, -1.0)
+snake = SnakeMDP(HEIGHT, WIDTH, 50.0, -100.0, -1)
 
 # create pygame display
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
@@ -45,7 +48,6 @@ target_network.eval()
 optimizer = optim.RMSprop(policy_network.parameters(), lr=LEARNING_RATE)
 
 replay_buffer = ReplayMemory(REPLAY_MEMORY_SIZE)
-exploration_strategy = EpsilonGreedyPolicy(EXPLORATION_RATE)
 
 state = snake.sample_start_state()
 
@@ -59,13 +61,15 @@ ttl = 1000
 
 for episode in count():
 
+    # print(hyperparams.get_state())
+
     display.draw(state.world)
     
     state_torch = torch.from_numpy(state.world)
     state_torch = state_torch.unsqueeze(0).unsqueeze(0)
     
     # sample action according to exploration strategy
-    action = exploration_strategy.sample_action(policy_network, state.world)
+    action = epsilon_greedy(policy_network, state.world, float(hyperparams['exploration_rate']))
 
     # step
     reward = snake.reward(state, action)
@@ -115,12 +119,6 @@ for episode in count():
 
 
     display.update()
-    if gameno % demo_interval == 0:
-        if curr_time == 0:
-            print(f'time: {sum(surv_time) / len(surv_time):.2f}    food: {food / len(surv_time)}')
-            surv_time.clear()
-            food = 0
-        if curr_time < 50:
-            sleep(0.5)
 
-    curr_time += 1
+    if (hyperparams['slow'] == 'True'):
+        sleep(0.5)

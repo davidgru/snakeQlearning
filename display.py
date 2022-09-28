@@ -1,4 +1,5 @@
 import pygame
+import sys
 
 from snakeMDP import BODY_ID, HEAD_ID, FOOD_ID, EMPTY_ID
 
@@ -37,5 +38,5 @@ class Display:
     def update(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                exit(0)
+                sys.exit(0)
 
