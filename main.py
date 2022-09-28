@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from display import Display
-from dqn import DQN
+from dqn import DQN, ResNet
 from exploration_strategy import epsilon_greedy, softmax_policy
 from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
@@ -18,7 +18,7 @@ HEIGHT = 10
 WIDTH = 10
 TILE_SIZE = 40
 
-EXPLORATION_RATE = 0.5
+EXPLORATION_RATE = 5
 DISCOUNT_FACTOR = 0.9
 LEARNING_RATE = 0.001
 BATCH_SIZE = 512
@@ -40,8 +40,8 @@ snake = SnakeMDP(HEIGHT, WIDTH, 50.0, -100.0, -1)
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
 
 # create policy and target networks
-policy_network = DQN(HEIGHT, WIDTH, device).to(device)
-target_network = DQN(HEIGHT, WIDTH, device).to(device)
+policy_network = ResNet(HEIGHT, WIDTH, device).to(device)
+target_network = ResNet(HEIGHT, WIDTH, device).to(device)
 target_network.load_state_dict(policy_network.state_dict())
 target_network.eval()
 
