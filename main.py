@@ -15,13 +15,14 @@ from snakeMDP import Action, SnakeMDP
 
 HEIGHT = 10
 WIDTH = 10
-TILE_SIZE = 30
+TILE_SIZE = 40
 
-EXPLORATION_RATE = 0.05
+EXPLORATION_RATE = 0.1
 DISCOUNT_FACTOR = 0.9
 LEARNING_RATE = 0.0001
-TARGET_UPDATE_INTERVAL = 10
-REPLAY_MEMORY_SIZE = 10000
+BATCH_SIZE = 256
+TARGET_UPDATE_INTERVAL = 50
+REPLAY_MEMORY_SIZE = 1000000
 
 
 # use qpu if available
@@ -30,7 +31,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device.type)
 
 # create snake mdp
-snake = SnakeMDP(HEIGHT, WIDTH, 1.0, 0.0, 0.0)
+snake = SnakeMDP(HEIGHT, WIDTH, 100.0, -1.0, -1.0)
 
 # create pygame display
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
@@ -48,9 +49,9 @@ exploration_strategy = EpsilonGreedyPolicy(EXPLORATION_RATE)
 
 state = snake.sample_start_state()
 
-demo_interval = 500
+demo_interval = 100
 
-gameno = 0
+gameno = 1
 curr_time = 0
 food = 0
 surv_time = [0]
@@ -66,41 +67,46 @@ for episode in count():
     # sample action according to exploration strategy
     action = exploration_strategy.sample_action(policy_network, state.world)
 
-    # compute temporal difference error
+    # step
     reward = snake.reward(state, action)
-    if reward == 1.0:
-        food += 1
-        ttl = 1000
     next_state = snake.next(state, action)
-    if ttl <= 0:
-        next_state = None
-    ttl -= 1
 
-    # compute predicted Q value
-    predicted_value = policy_network(state_torch)[0][action.value]
-    # print(predicted_value.item())
-    
-    # compute target
+    state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
     if next_state is not None:
-        next_state_torch = torch.from_numpy(next_state.world)
-        next_state_torch = next_state_torch.unsqueeze(0).unsqueeze(0)
-        target_value = reward + target_network(next_state_torch).max(1)[0].view(1, 1).item()
-        target_value = torch.tensor([target_value], device=device, dtype=torch.float32)
+        next_state_tensor = torch.from_numpy(next_state.world).unsqueeze(0).unsqueeze(0)
     else:
         next_state = snake.sample_start_state()
-        target_value = torch.tensor([reward], device=device, dtype=torch.float32)
+        next_state_tensor = None
         gameno += 1
-        surv_time.append(curr_time)
-        curr_time = 0
 
-    criterion = nn.SmoothL1Loss()
-    loss = criterion(predicted_value.unsqueeze(0), target_value)
-    
-    optimizer.zero_grad()
-    loss.backward()
-    for param in policy_network.parameters():
-        param.grad.data.clamp_(-1, 1)
-    optimizer.step()
+    replay_buffer.push(Transition(state_tensor, torch.tensor([[action.value]], device=device), next_state_tensor, torch.tensor([reward], device=device)))
+
+    # optimize
+    if len(replay_buffer) >= BATCH_SIZE:
+        transitions = replay_buffer.sample(BATCH_SIZE)
+        batch = Transition(*zip(*transitions))
+
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), device=device, dtype=torch.bool)
+        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+
+        state_batch = torch.cat(batch.state)
+        action_batch = torch.cat(batch.action)
+        reward_batch = torch.cat(batch.reward)
+
+        state_action_values = policy_network(state_batch).gather(1, action_batch)
+        
+        next_state_values = torch.zeros(BATCH_SIZE, device=device)
+        next_state_values[non_final_mask] = target_network(non_final_next_states).max(1)[0].detach()#
+        expected_state_action_values = (next_state_values * DISCOUNT_FACTOR) + reward_batch
+
+        criterion = nn.SmoothL1Loss()
+        loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+
+        optimizer.zero_grad()
+        loss.backward()
+        for param in policy_network.parameters():
+            param.grad.data.clamp_(-1, 1)
+        optimizer.step()
 
     if episode % TARGET_UPDATE_INTERVAL == 0:
         target_network.load_state_dict(policy_network.state_dict())
