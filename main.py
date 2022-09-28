@@ -9,7 +9,7 @@ import torch.optim as optim
 
 from display import Display
 from dqn import DQN
-from exploration_strategy import epsilon_greedy
+from exploration_strategy import epsilon_greedy, softmax_policy
 from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
 from snakeMDP import Action, SnakeMDP
@@ -18,7 +18,7 @@ HEIGHT = 10
 WIDTH = 10
 TILE_SIZE = 40
 
-EXPLORATION_RATE = 0.9
+EXPLORATION_RATE = 0.5
 DISCOUNT_FACTOR = 0.9
 LEARNING_RATE = 0.001
 BATCH_SIZE = 512
@@ -69,7 +69,7 @@ for episode in count():
     state_torch = state_torch.unsqueeze(0).unsqueeze(0)
     
     # sample action according to exploration strategy
-    action = epsilon_greedy(policy_network, state.world, float(hyperparams['exploration_rate']))
+    action = softmax_policy(policy_network, state.world, float(hyperparams['exploration_rate']))
 
     # step
     reward = snake.reward(state, action)
