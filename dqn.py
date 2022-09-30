@@ -1,8 +1,5 @@
-import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
-import torchvision.transforms as T
 
 
 class DQN(nn.Module):
@@ -46,7 +43,7 @@ class ResNet(nn.Module):
 
         self.conv21 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv22 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
-        
+
         self.conv31 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.conv32 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
 
