@@ -1,4 +1,3 @@
-from email import policy
 from time import sleep, time
 from itertools import count
 import math
@@ -33,14 +32,11 @@ FOOD_REWARD = 1
 DEATH_REWARD = -2
 LIVING_REWARD = -0.01
 
-TEST_PERIOD = 100
-NUM_TESTS = 10
-
 temp = TEMP_START
 
 # hyperparameters are changeable at runtime via commandline
 # example: \>set exploration_rate 0.2
-hyperparams = Hyperparameters(exploration_rate=TEMP_START, discount_factor=DISCOUNT_FACTOR, update_interval=TARGET_UPDATE_INTERVAL, slow='False')
+hyperparams = Hyperparameters(slow='False', test='False')
 
 
 # use qpu if available
@@ -66,9 +62,8 @@ state = snake.sample_start_state()
 
 
 gameno = 1
-new_game = True
 
-plot = Plot(NUM_TESTS)
+plot = Plot(20)
 
 last_plot = time()
 
@@ -76,7 +71,7 @@ for episode in count():
 
     # print(hyperparams.get_state())
 
-    display.draw(state.world)
+    display.draw(state.world, "training")
     
     state_torch = torch.from_numpy(state.world)
     state_torch = state_torch.unsqueeze(0).unsqueeze(0)
@@ -88,7 +83,7 @@ for episode in count():
 
     # step
     reward = snake.reward(state, action)
-    _, next_state = snake.next(state, action)
+    score, next_state = snake.next(state, action)
 
     state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
     if next_state is not None:
@@ -97,7 +92,8 @@ for episode in count():
         next_state = snake.sample_start_state()
         next_state_tensor = None
         gameno += 1
-        new_game = True
+        plot.push(score)
+        plot.show()
         print(temp)
 
     replay_buffer.push(Transition(state_tensor, torch.tensor([[action.value]], device=device), next_state_tensor, torch.tensor([reward], device=device)))
@@ -134,18 +130,12 @@ for episode in count():
 
     state = next_state
 
+    if hyperparams['test'] == 'True':
+        test(policy_network, display, snake, ttl=2000)
+
 
     display.update()
-
-    if gameno % TEST_PERIOD == 0:
-        for i in range(NUM_TESTS):
-            score = test(policy_network, display, snake, ttl = 2000)
-            plot.push(score)
-        plot.show()
-
-
 
     if (hyperparams['slow'] == 'True'):
         sleep(0.5)
 
-    new_game = False

@@ -17,7 +17,8 @@ class Display:
         self.surface = pygame.display.set_mode((surface_width, surface_height))
 
 
-    def draw(self, world):
+    def draw(self, world, label):
+        pygame.display.set_caption(label)
         self.surface.fill((0, 0, 0)) # black background
         for y, row in enumerate(world):
             for x, id_ in enumerate(row):

@@ -11,7 +11,7 @@ def test(policy_network, display, snake, ttl = 1000):
     ttll = ttl
 
     while state is not None:
-        display.draw(state.world)
+        display.draw(state.world, "testing")
         
         with torch.no_grad():
             state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
