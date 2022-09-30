@@ -13,10 +13,9 @@ class Plot:
         self.avg = []
         self.min = []
         self.window_length = window
-        scale = range(0, len(self.avg) * 20, 20)
-        plt.plot(scale, self.max, label='Max', color='g')
-        plt.plot(scale, self.avg, label='Average', color='b')
-        plt.plot(scale, self.min, label='Min', color='r')
+        plt.plot(self.max, label='Max', color='g')
+        plt.plot(self.avg, label='Average', color='b')
+        plt.plot(self.min, label='Min', color='r')
         plt.legend()
         plt.ion()
         plt.show()
@@ -37,8 +36,7 @@ class Plot:
         if self.last_update_len == len(self.avg):
             return
         self.last_update_len = len(self.avg)
-        scale = range(0, len(self.avg) * 20, 20)
-        plt.plot(scale, self.max, label='Max', color='g')
-        plt.plot(scale, self.avg, label='Average', color='b')
-        plt.plot(scale, self.min, label='Min', color='r')
+        plt.plot(self.max, label='Max', color='g')
+        plt.plot(self.avg, label='Average', color='b')
+        plt.plot(self.min, label='Min', color='r')
         plt.pause(.01)

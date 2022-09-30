@@ -1,3 +1,4 @@
+from email import policy
 from time import sleep, time
 from itertools import count
 import math
@@ -12,6 +13,7 @@ from exploration_strategy import epsilon_greedy, softmax_policy
 from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
 from snakeMDP import Action, SnakeMDP
+from test import test
 from plot import Plot
 
 HEIGHT = 10
@@ -22,7 +24,7 @@ TEMP_START = 100.0
 TEMP_END = 0.01
 TEMP_DECAY = 850
 DISCOUNT_FACTOR = 0.95
-LEARNING_RATE = 0.0005
+LEARNING_RATE = 0.001
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
 REPLAY_MEMORY_SIZE = 1000000
@@ -30,6 +32,9 @@ REPLAY_MEMORY_SIZE = 1000000
 FOOD_REWARD = 1
 DEATH_REWARD = -2
 LIVING_REWARD = -0.01
+
+TEST_PERIOD = 100
+NUM_TESTS = 10
 
 temp = TEMP_START
 
@@ -59,11 +64,11 @@ replay_buffer = ReplayMemory(REPLAY_MEMORY_SIZE)
 
 state = snake.sample_start_state()
 
+
 gameno = 1
+new_game = True
 
-plot = Plot(20)
-
-food = 0
+plot = Plot(NUM_TESTS)
 
 last_plot = time()
 
@@ -83,10 +88,7 @@ for episode in count():
 
     # step
     reward = snake.reward(state, action)
-    next_state = snake.next(state, action)
-
-    if reward == FOOD_REWARD:
-        food += 1
+    _, next_state = snake.next(state, action)
 
     state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
     if next_state is not None:
@@ -94,9 +96,8 @@ for episode in count():
     else:
         next_state = snake.sample_start_state()
         next_state_tensor = None
-        plot.push(food)
-        food = 0
         gameno += 1
+        new_game = True
         print(temp)
 
     replay_buffer.push(Transition(state_tensor, torch.tensor([[action.value]], device=device), next_state_tensor, torch.tensor([reward], device=device)))
@@ -136,10 +137,15 @@ for episode in count():
 
     display.update()
 
-    if time() - last_plot >= 10:
-        last_plot = time()
+    if gameno % TEST_PERIOD == 0:
+        for i in range(NUM_TESTS):
+            score = test(policy_network, display, snake, ttl = 2000)
+            plot.push(score)
         plot.show()
+
 
 
     if (hyperparams['slow'] == 'True'):
         sleep(0.5)
+
+    new_game = False

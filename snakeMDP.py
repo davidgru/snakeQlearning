@@ -17,6 +17,7 @@ class Action(IntEnum):
     UP = 3
 
 
+
 def get_action(n):
     if n == 0:
         return Action.LEFT
@@ -48,7 +49,7 @@ class SnakeMDP:
         new_head_y, new_head_x = self.find_next_head_pos(head_y, head_x, action)
 
         if self._crashed(world, new_head_y, new_head_x, body):
-            return None # Game over
+            return len(state.body) - 1, None # Game over
 
         new_world = world.copy()
         new_body = body.copy()
@@ -64,7 +65,8 @@ class SnakeMDP:
             back_y, back_x = new_body.pop()
             new_world[back_y, back_x] = EMPTY_ID
 
-        return State(new_world, new_head_y, new_head_x, new_body)
+        new_world[new_head_y, new_head_x] = HEAD_ID
+        return len(new_body) - 1, State(new_world, new_head_y, new_head_x, new_body)
 
 
     def reward(self, state, action):
