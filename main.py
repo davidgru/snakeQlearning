@@ -1,7 +1,6 @@
-from email import policy
-from select import epoll
-from time import sleep
+from time import sleep, time
 from itertools import count
+import math
 
 import torch
 import torch.nn as nn
@@ -13,28 +12,37 @@ from exploration_strategy import epsilon_greedy, softmax_policy
 from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
 from snakeMDP import Action, SnakeMDP
+from plot import Plot
 
 HEIGHT = 10
 WIDTH = 10
 TILE_SIZE = 40
 
-EXPLORATION_RATE = 5
-DISCOUNT_FACTOR = 0.9
-LEARNING_RATE = 0.001
+TEMP_START = 100.0
+TEMP_END = 0.01
+TEMP_DECAY = 850
+DISCOUNT_FACTOR = 0.95
+LEARNING_RATE = 0.0005
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
 REPLAY_MEMORY_SIZE = 1000000
 
+FOOD_REWARD = 1
+DEATH_REWARD = -2
+LIVING_REWARD = -0.01
+
+temp = TEMP_START
+
 # hyperparameters are changeable at runtime via commandline
 # example: \>set exploration_rate 0.2
-hyperparams = Hyperparameters(exploration_rate=EXPLORATION_RATE, discount_factor=DISCOUNT_FACTOR, update_interval=TARGET_UPDATE_INTERVAL, slow='False')
+hyperparams = Hyperparameters(exploration_rate=TEMP_START, discount_factor=DISCOUNT_FACTOR, update_interval=TARGET_UPDATE_INTERVAL, slow='False')
 
 
 # use qpu if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # create snake mdp
-snake = SnakeMDP(HEIGHT, WIDTH, 50.0, -100.0, -1)
+snake = SnakeMDP(HEIGHT, WIDTH, FOOD_REWARD, DEATH_REWARD, LIVING_REWARD)
 
 # create pygame display
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
@@ -51,13 +59,13 @@ replay_buffer = ReplayMemory(REPLAY_MEMORY_SIZE)
 
 state = snake.sample_start_state()
 
-demo_interval = 100
-
 gameno = 1
-curr_time = 0
+
+plot = Plot(20)
+
 food = 0
-surv_time = [0]
-ttl = 1000
+
+last_plot = time()
 
 for episode in count():
 
@@ -69,11 +77,16 @@ for episode in count():
     state_torch = state_torch.unsqueeze(0).unsqueeze(0)
     
     # sample action according to exploration strategy
-    action = softmax_policy(policy_network, state.world, float(hyperparams['exploration_rate']))
+    action = softmax_policy(policy_network, state.world, temp)
+    temp = TEMP_END + (TEMP_START - TEMP_END) * \
+        math.exp(-1. * gameno / TEMP_DECAY)
 
     # step
     reward = snake.reward(state, action)
     next_state = snake.next(state, action)
+
+    if reward == FOOD_REWARD:
+        food += 1
 
     state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
     if next_state is not None:
@@ -81,7 +94,10 @@ for episode in count():
     else:
         next_state = snake.sample_start_state()
         next_state_tensor = None
+        plot.push(food)
+        food = 0
         gameno += 1
+        print(temp)
 
     replay_buffer.push(Transition(state_tensor, torch.tensor([[action.value]], device=device), next_state_tensor, torch.tensor([reward], device=device)))
 
@@ -119,6 +135,11 @@ for episode in count():
 
 
     display.update()
+
+    if time() - last_plot >= 10:
+        last_plot = time()
+        plot.show()
+
 
     if (hyperparams['slow'] == 'True'):
         sleep(0.5)
