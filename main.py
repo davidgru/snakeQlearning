@@ -13,7 +13,9 @@ from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
 from snakeMDP import Action, SnakeMDP
 from test import test
-from plot import Plot
+from plot import GameStats, Plot
+
+import sys
 
 HEIGHT = 10
 WIDTH = 10
@@ -21,9 +23,9 @@ TILE_SIZE = 40
 
 TEMP_START = 100.0
 TEMP_END = 0.01
-TEMP_DECAY = 850
+TEMP_DECAY = 800
 DISCOUNT_FACTOR = 0.95
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0005
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
 REPLAY_MEMORY_SIZE = 1000000
@@ -31,6 +33,8 @@ REPLAY_MEMORY_SIZE = 1000000
 FOOD_REWARD = 1
 DEATH_REWARD = -2
 LIVING_REWARD = -0.01
+
+SAVE_INTERVAL = 200
 
 temp = TEMP_START
 
@@ -50,6 +54,10 @@ display = Display(HEIGHT, WIDTH, TILE_SIZE)
 
 # create policy and target networks
 policy_network = ResNet(HEIGHT, WIDTH, device).to(device)
+if len(sys.argv) >= 2:
+    policy_network.load_state_dict(torch.load(sys.argv[1]))
+    policy_network.eval()
+
 target_network = ResNet(HEIGHT, WIDTH, device).to(device)
 target_network.load_state_dict(policy_network.state_dict())
 target_network.eval()
@@ -62,10 +70,13 @@ state = snake.sample_start_state()
 
 
 gameno = 1
+new_game = True
 
 plot = Plot(20)
 
 last_plot = time()
+
+stats = GameStats()
 
 for episode in count():
 
@@ -84,6 +95,7 @@ for episode in count():
     # step
     reward = snake.reward(state, action)
     score, next_state = snake.next(state, action)
+    stats.push(score)
 
     state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
     if next_state is not None:
@@ -92,8 +104,9 @@ for episode in count():
         next_state = snake.sample_start_state()
         next_state_tensor = None
         gameno += 1
-        plot.push(score)
-        plot.show()
+        new_game = True
+        plot.push(stats)
+        stats = GameStats()
         print(temp)
 
     replay_buffer.push(Transition(state_tensor, torch.tensor([[action.value]], device=device), next_state_tensor, torch.tensor([reward], device=device)))
@@ -133,9 +146,14 @@ for episode in count():
     if hyperparams['test'] == 'True':
         test(policy_network, display, snake, ttl=2000)
 
+    
+    if gameno % SAVE_INTERVAL == 0 and new_game:
+        torch.save(policy_network, "./save/model")
 
     display.update()
 
     if (hyperparams['slow'] == 'True'):
         sleep(0.5)
+
+    new_game = False
 
