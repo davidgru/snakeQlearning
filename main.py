@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from display import Display
-from dqn import DQN, ResNet
+from dqn import DQN, ResNet, CNN
 from exploration_strategy import epsilon_greedy, softmax_policy
 from hyperparameters import Hyperparameters
 from replay_buffer import Transition, ReplayMemory
@@ -21,10 +21,10 @@ HEIGHT = 10
 WIDTH = 10
 TILE_SIZE = 40
 
-TEMP_START = 100.0
+TEMP_START = 1000.0
 TEMP_END = 0.01
-TEMP_DECAY = 800
-DISCOUNT_FACTOR = 0.95
+TEMP_DECAY = 650
+DISCOUNT_FACTOR = 0.99
 LEARNING_RATE = 0.0005
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
@@ -53,12 +53,12 @@ snake = SnakeMDP(HEIGHT, WIDTH, FOOD_REWARD, DEATH_REWARD, LIVING_REWARD)
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
 
 # create policy and target networks
-policy_network = ResNet(HEIGHT, WIDTH, device).to(device)
+policy_network = CNN(HEIGHT, WIDTH, device).to(device)
 if len(sys.argv) >= 2:
     policy_network.load_state_dict(torch.load(sys.argv[1]))
     policy_network.eval()
 
-target_network = ResNet(HEIGHT, WIDTH, device).to(device)
+target_network = CNN(HEIGHT, WIDTH, device).to(device)
 target_network.load_state_dict(policy_network.state_dict())
 target_network.eval()
 
@@ -107,7 +107,6 @@ for episode in count():
         new_game = True
         plot.push(stats)
         stats = GameStats()
-        print(temp)
 
     replay_buffer.push(Transition(state_tensor, torch.tensor([[action.value]], device=device), next_state_tensor, torch.tensor([reward], device=device)))
 
