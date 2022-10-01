@@ -6,7 +6,7 @@ import torch
 
 from display import Display
 from snakeMDP import Action, SnakeMDP
-from dqn import ResNet
+from dqn import CNN
 
 
 def test(policy_network, display, snake, delay = 0.5, ttl = 1000):
@@ -39,7 +39,6 @@ def test(policy_network, display, snake, delay = 0.5, ttl = 1000):
 def main(argc, argv):
     if argc < 2:
         sys.exit(1)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.load(argv[1])
     model.eval()
 
@@ -48,8 +47,6 @@ def main(argc, argv):
     snake = SnakeMDP(10, 10, 0, 0, 0)
 
     test(model, display, snake, 0.25)
-
-
 
 
 if __name__ == '__main__':
