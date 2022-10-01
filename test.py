@@ -1,9 +1,15 @@
+import sys
+from time import sleep
+
 
 import torch
 
-from snakeMDP import Action
+from display import Display
+from snakeMDP import Action, SnakeMDP
+from dqn import ResNet
 
-def test(policy_network, display, snake, ttl = 1000):
+
+def test(policy_network, display, snake, delay = 0.5, ttl = 1000):
 
     state = snake.sample_start_state()
     score = 0
@@ -25,5 +31,26 @@ def test(policy_network, display, snake, ttl = 1000):
         ttll -= 1
         if ttll <= 0:
             return score
+        sleep(delay)
 
     return score
+
+
+def main(argc, argv):
+    if argc < 2:
+        sys.exit(1)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = torch.load(argv[1])
+    model.eval()
+
+    display = Display(10, 10, 40)
+
+    snake = SnakeMDP(10, 10, 0, 0, 0)
+
+    test(model, display, snake, 0.25)
+
+
+
+
+if __name__ == '__main__':
+    main(len(sys.argv), sys.argv)
