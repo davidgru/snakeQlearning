@@ -148,7 +148,7 @@ for episode in count():
 
     
     if gameno % SAVE_INTERVAL == 0 and new_game:
-        torch.save(policy_network, "./save/model")
+        torch.save(policy_network.state_dict(), "./save/model")
 
     display.update()
 
