@@ -58,6 +58,7 @@ class Plot:
             axs[i].plot([], label='Average', color='b')
             axs[i].plot([], label='Min', color='r') 
             axs[i].legend()
+            axs[i].grid()
             self.metrics[name] = {
                 "hist": hist,
                 "ax": axs[i],
@@ -75,10 +76,12 @@ class Plot:
 
         self.points += 1
         if self.points % self.granularity == 0:
-            plt.clf()
             for val in self.metrics.values():
                 hist = val['hist']
                 ax = val['ax']
+                ax.cla()
+                ax.set_title(hist.name)
+                ax.grid()
                 ax.plot(hist.max, label='Max', color='g')
                 ax.plot(hist.avg, label='Average', color='b')
                 ax.plot(hist.min, label='Min', color='r')
