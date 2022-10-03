@@ -10,7 +10,7 @@
 ```
 python3 -m venv env
 ```
-2. Activate it.
+2. Activate virtual environment.
 ```
 source env/bin/activate
 ```
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 4. Test pretrained model
 ```
-python test.py model.pt
+python test.py gregor.pt
 ```
 5. Train yourself
 ```
@@ -59,3 +59,12 @@ There are 4 actions:
   * Epsilon-Greedy doesn't work well because it samples actions that lead to certain death, therefore snake doesn't get long 
   * Softmax works better
   * TODO: Find good temperature decay rate
+
+# Results
+I stopped training after 27 hours on my GeForce MX250 which equated to 450 epochs with 20 games each. So in total 9000 games were played. I plotted the maximum, average and minimum score of each epoch as well as a cumulative score where the score at every time step is accumulated.
+
+![image info](./results.png)
+
+In the last 20 epochs catastrophic forgetting got really bad. Meanwhile the agent wasn't quite able to get an average score of 30/99 consistently. In a very good game, the agent is able to get to a score of 50\99.
+
+I think the main problem is, that the agent has no memory, therefor it does not know how the snakes tail moves which hinders him in avoiding the snakes own body.

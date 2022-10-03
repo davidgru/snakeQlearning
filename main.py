@@ -126,4 +126,4 @@ for game in count():
     plot.push(stats)
 
     if game % SAVE_INTERVAL:
-        torch.save(policy_network.state_dict(), "./save/model")
+        torch.save(policy_network.state_dict(), "./my_model.pt")
