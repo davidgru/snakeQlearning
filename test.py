@@ -49,6 +49,7 @@ def main(argc, argv):
     if argc < 2:
         sys.exit(1)
 
+
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device('cpu')
     model = CNN(10, 10, device).to(device)
@@ -56,7 +57,7 @@ def main(argc, argv):
     model.eval()
 
     display = Display(10, 10, 40)
-    snake = SnakeMDP(10, 10, 0, 0, 0)
+    snake = SnakeMDP(10, 10, 0, 0, 0, fade=argc == 3 and argv[2] == 'fade')
 
     test(model, snake, display, 0.25)
 

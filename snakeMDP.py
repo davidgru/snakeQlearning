@@ -7,7 +7,7 @@ BODY_ID = 1
 HEAD_ID = 2
 FOOD_ID = 3
 
-State = namedtuple('State', 'world head_y head_x body')
+State = namedtuple('State', 'world head_y head_x food_y food_x body')
 Action = IntEnum('Action', 'LEFT RIGHT DOWN UP')
 
 class Action(IntEnum):
@@ -24,12 +24,13 @@ def get_action(n):
 
 class SnakeMDP:
 
-    def __init__(self, height, width, food_reward, death_reward, time_reward):
+    def __init__(self, height, width, food_reward, death_reward, time_reward, fade=False):
         self.height = height
         self.width = width
         self.food_reward = food_reward
         self.death_reward = death_reward
         self.time_penalty = time_reward
+        self.fade = fade
 
 
     def sample_start_state(self):
@@ -37,15 +38,16 @@ class SnakeMDP:
         start_y = np.random.randint(self.height)
         start_x = np.random.randint(self.width)
         world[start_y, start_x] = HEAD_ID
-        world = self._place_food(world)
+        food_y, food_x = self._place_food(world)
         body = deque([(start_y, start_x)])
-        return State(world, start_y, start_x, body)
+
+        return State(world, start_y, start_x, food_y, food_x, body)
 
 
     def next(self, state, action):
         """Find the next state given state and action"""
 
-        world, head_y, head_x, body = state
+        world, head_y, head_x, food_y, food_x, body = state
         new_head_y, new_head_x = self.find_next_head_pos(head_y, head_x, action)
 
         if self._crashed(world, new_head_y, new_head_x, body):
@@ -53,20 +55,33 @@ class SnakeMDP:
 
         new_world = world.copy()
         new_body = body.copy()
-        
-        # advance the snake
+
+        new_world = np.full(shape=(self.height, self.width), fill_value=EMPTY_ID, dtype=np.float32)
+        new_body = body.copy()
         new_body.appendleft((new_head_y, new_head_x))
-        new_world[new_head_y, new_head_x] = HEAD_ID
-        new_world[head_y, head_x] = BODY_ID
 
-        if self._found_food(world, new_head_y, new_head_x):
-            self._place_food(new_world)
-        else:
-            back_y, back_x = new_body.pop()
-            new_world[back_y, back_x] = EMPTY_ID
+        found_food = self._found_food(world, new_head_y, new_head_x)
+        if not found_food:
+            new_body.pop()
 
+        # redraw world
+        for i, pos in enumerate(new_body):
+            y, x = pos
+            if self.fade:
+                new_world[y, x] = float(BODY_ID * (len(new_body) - i)) / len(new_body)
+            else:
+                new_world[y, x] = BODY_ID
         new_world[new_head_y, new_head_x] = HEAD_ID
-        return len(new_body) - 1, State(new_world, new_head_y, new_head_x, new_body)
+
+        if found_food:
+            food_pos = self._place_food(new_world)
+            if not food_pos:
+                return len(new_body) - 1, None # Won
+            food_y, food_x = food_pos
+
+        new_world[food_y, food_x] = FOOD_ID
+
+        return len(new_body) - 1, State(new_world, new_head_y, new_head_x, food_y, food_x, new_body)
 
 
     def reward(self, state, action):
@@ -100,12 +115,8 @@ class SnakeMDP:
     def _crashed(self, world, head_y, head_x, body):
         if not (0 <= head_y < self.height and 0 <= head_x < self.width):
             return True
-        if len(body) == 1:
-            return False
-        if np.isclose(world[head_y,head_x], BODY_ID, atol=0.1):
-            if len(body) == 2:
-                return True
-            return (head_y, head_x) != body[-1]
+        return 0.0 <= world[head_y,head_x] <= BODY_ID
+
 
     def _found_food(self, world, head_y, head_x):
         return np.isclose(world[head_y,head_x], FOOD_ID, atol=0.1)
@@ -122,6 +133,6 @@ class SnakeMDP:
                 if world[y, x] < 0:
                     if zero_count == food_index:
                         world[y, x] = FOOD_ID
-                        return world
+                        return (y, x)
                     zero_count += 1
-        return world
+        return None

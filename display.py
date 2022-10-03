@@ -22,7 +22,7 @@ class Display:
         self.surface.fill((0, 0, 0)) # black background
         for y, row in enumerate(world):
             for x, id_ in enumerate(row):
-                if id_ == BODY_ID:
+                if 0 < id_ <= BODY_ID:
                     color = (255, 255, 255) # white
                 elif id_ == HEAD_ID:
                     color = (255, 0, 0) # red
