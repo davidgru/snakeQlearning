@@ -27,7 +27,7 @@ def main(argc, argv):
     policy_network.load_state_dict(torch.load(argv[1], map_location=device))
     policy_network.eval()
 
-    snake = SnakeMDP(10, 10, 0, 0, 0)
+    snake = SnakeMDP(10, 10, 0, 0, 0, fade=argc >= 4 and argv[3] == 'fade')
     iterations = int(argv[2])
     cb = lambda i, score: print(f'simulated game {i}: {score}')
 
