@@ -87,7 +87,7 @@ class SnakeMDP:
     def reward(self, state, action):
         """Find the reward given state and action"""
         
-        world, head_y, head_x, body = state
+        world, head_y, head_x, _, _, body = state
         new_head_y, new_head_x = self.find_next_head_pos(head_y, head_x, action)
         if self._crashed(world, new_head_y, new_head_x, body):
             return self.death_reward

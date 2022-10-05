@@ -1,4 +1,4 @@
-from time import sleep
+from time import sleep, time
 from itertools import count
 import math
 
@@ -24,10 +24,10 @@ DISCOUNT_FACTOR = 0.95
 LEARNING_RATE = 0.0005
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
-REPLAY_MEMORY_SIZE = 1000000
+REPLAY_MEMORY_SIZE = 500000
 
 FOOD_REWARD = 1
-DEATH_REWARD = -2
+DEATH_REWARD = -3
 LIVING_REWARD = -0.01
 
 PLOT_GRANULARITY = 20
@@ -35,9 +35,8 @@ SAVE_INTERVAL = 200
 
 # use gpu if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 # create snake mdp
-snake = SnakeMDP(HEIGHT, WIDTH, FOOD_REWARD, DEATH_REWARD, LIVING_REWARD)
+snake = SnakeMDP(HEIGHT, WIDTH, FOOD_REWARD, DEATH_REWARD, LIVING_REWARD, fade=True)
 
 # create pygame display
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
@@ -68,7 +67,7 @@ for game in count():
         display.update()
 
         # need to convert numpy world to torch tensor and add dimensions for channel and batch
-        state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
+        state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0).to(device)
         
         # sample action according to exploration strategy
         temp = TEMP_END + (TEMP_START - TEMP_END) * math.exp(-1. * game / TEMP_DECAY)
@@ -81,7 +80,7 @@ for game in count():
         
         # need convert all components of transition to torch tensors
         if next_state:
-            next_state_tensor = torch.from_numpy(next_state.world).unsqueeze(0).unsqueeze(0)
+            next_state_tensor = torch.from_numpy(next_state.world).unsqueeze(0).unsqueeze(0).to(device)
         else:
             next_state_tensor = None
         action_tensor = torch.tensor([[action]], device=device)
@@ -91,6 +90,7 @@ for game in count():
 
         # make optimization step
         if len(replay_buffer) >= BATCH_SIZE:
+
             transitions = replay_buffer.sample(BATCH_SIZE)
             batch = Transition(*zip(*transitions))
 
