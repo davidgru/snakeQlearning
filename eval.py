@@ -8,10 +8,10 @@ from snakeMDP import SnakeMDP
 from test import test
 
 # simulates specified number of games and returns a list of scores
-def simulate(policy_network, snake, iterations=0, cb=None):
+def simulate(policy_network, snake, iterations=0, ttl=2000, cb=None):
     scores = []
     for i in range(iterations):
-        stats = test(policy_network, snake)
+        stats = test(policy_network, snake, ttl=ttl)
         scores.append(stats.score)
         if cb:
             cb(i, stats.score)
@@ -23,15 +23,22 @@ def main(argc, argv):
         sys.exit(1)
 
     device = torch.device('cpu')
-    policy_network = CNN(10, 10, device).to(device)
-    policy_network.load_state_dict(torch.load(argv[1], map_location=device))
-    policy_network.eval()
+    info = torch.load(argv[1], map_location=device)
 
-    snake = SnakeMDP(10, 10, 0, 0, 0, fade=argc >= 4 and argv[3] == 'fade')
+    height = info['height']
+    width = info['width']
+    fade = info['fade']
+
+    model = CNN(height, width, device).to(device)
+    model.load_state_dict(info['state_dict'])
+    model.eval()
+
+    snake = SnakeMDP(height, width, 0, 0, 0, fade=fade)
+
     iterations = int(argv[2])
     cb = lambda i, score: print(f'simulated game {i}: {score}')
 
-    scores = simulate(policy_network, snake, iterations, cb)
+    scores = simulate(model, snake, iterations, ttl=5*width*height, cb=cb)
 
     print('-' * 100)
     print(f'max score: {max(scores)}')

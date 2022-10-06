@@ -13,15 +13,17 @@ from plot import GameStats, Plot
 from replay_buffer import Transition, ReplayMemory
 from snakeMDP import SnakeMDP
 
-HEIGHT = 10
-WIDTH = 10
+HEIGHT = 6
+WIDTH = 6
 TILE_SIZE = 40
+
+FADE = True
 
 TEMP_START = 100.0
 TEMP_END = 0.01
-TEMP_DECAY = 750
+TEMP_DECAY = 500
 DISCOUNT_FACTOR = 0.95
-LEARNING_RATE = 0.0005
+LEARNING_RATE = 0.001
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
 REPLAY_MEMORY_SIZE = 500000
@@ -36,7 +38,7 @@ SAVE_INTERVAL = 200
 # use gpu if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # create snake mdp
-snake = SnakeMDP(HEIGHT, WIDTH, FOOD_REWARD, DEATH_REWARD, LIVING_REWARD, fade=True)
+snake = SnakeMDP(HEIGHT, WIDTH, FOOD_REWARD, DEATH_REWARD, LIVING_REWARD, fade=FADE)
 
 # create pygame display
 display = Display(HEIGHT, WIDTH, TILE_SIZE)
@@ -126,4 +128,11 @@ for game in count():
     plot.push(stats)
 
     if game % SAVE_INTERVAL:
-        torch.save(policy_network.state_dict(), "./my_model.pt")
+        torch.save({
+            'width': WIDTH,
+            'height': HEIGHT,
+            'fade': FADE,
+            'state_dict': policy_network.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'game': game,
+        }, "./my_model.pt")

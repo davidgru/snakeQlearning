@@ -126,6 +126,8 @@ class SnakeMDP:
         """Find a free spot for the food"""
 
         num_empty = (world < 0).sum()
+        if num_empty <= 0:
+            return None
         food_index = np.random.randint(num_empty)
         zero_count = 0
         for y in range(world.shape[0]):

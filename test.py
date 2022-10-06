@@ -51,17 +51,23 @@ def main(argc, argv):
     if argc < 2:
         sys.exit(1)
 
-
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device('cpu')
-    model = CNN(10, 10, device).to(device)
-    model.load_state_dict(torch.load(argv[1], map_location=device))
+    info = torch.load(argv[1], map_location=device)
+
+    height = info['height']
+    width = info['width']
+    fade = info['fade']
+
+
+    model = CNN(height, width, device).to(device)
+    model.load_state_dict(info['state_dict'])
     model.eval()
 
-    display = Display(10, 10, 40)
-    snake = SnakeMDP(10, 10, 0, 0, 0, fade=argc == 3 and argv[2] == 'fade')
+    snake = SnakeMDP(height, width, 0, 0, 0, fade=fade)
+    
+    display = Display(height, width, 40)
 
-    test(model, snake, display, 0.25)
+    test(model, snake, display, delay=0.25, ttl=2*height*width)
 
 if __name__ == '__main__':
     main(len(sys.argv), sys.argv)
