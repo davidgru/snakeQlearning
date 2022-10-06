@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ```
 4. Test pretrained model
 ```
-python test.py gregor.pt
+python test.py ./models/gregor.pt
 ```
 5. Train yourself
 ```
