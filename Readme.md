@@ -61,10 +61,16 @@ There are 4 actions:
   * TODO: Find good temperature decay rate
 
 # Results
-I stopped training after 27 hours on my GeForce MX250 which equated to 450 epochs with 20 games each. So in total 9000 games were played. I plotted the maximum, average and minimum score of each epoch as well as a cumulative score where the score at every time step is accumulated.
+I stopped training after 27 hours on my GeForce MX250 which equated to 450 epochs with 20 games each. So in total 9000 games were played. I plotted the maximum, average and minimum score that `gregor` achieved in each epoch as well as a cumulative score where the score at every time step is accumulated. You can run `gregor` with `python test.py models/gregor.pt`
 
-![image info](./results.png)
+![gregor learning curve](./results.png)
 
-In the last 20 epochs catastrophic forgetting got really bad. Meanwhile the agent wasn't quite able to get an average score of 30/99 consistently. In a very good game, the agent is able to get to a score of 50\99.
+The agent wasn't quite able to get an average score of 30/99 consistently. In a very good game, the agent is able to get to a score of 50/99.
 
-I think the main problem is, that the agent has no memory, therefor it does not know how the snakes tail moves which hinders him in avoiding the snakes own body.
+I think the main problem is, that the agent has no memory, therefor it does not know how the snakes tail moves which hinders him in avoiding his own body.
+
+I trained a second model where the body doesn't have a constant value. The values of the body decrease linearly from `1` to `0`. The longer the body remains at this position the higher the value. In theory, the snake should have all information needed to beat the game. I trained for about 50h and the snake got to an average score of 35 which is still disappointing.
+
+![hmm learning curve](./resultsFade.png)
+
+You can run `hmm` with `python test.py models/hmm.pt`
