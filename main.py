@@ -24,7 +24,7 @@ TEMP_START = 100.0
 TEMP_END = 0.01
 TEMP_DECAY = 500
 DISCOUNT_FACTOR = 0.95
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.002
 BATCH_SIZE = 512
 TARGET_UPDATE_INTERVAL = 500
 REPLAY_MEMORY_SIZE = 500000
@@ -67,7 +67,6 @@ for game in count():
     ttl = TTL
 
     while state:
-        sleep(1)
 
         display.draw(state.world, "training")
         display.update()
