@@ -18,6 +18,7 @@ WIDTH = 6
 TILE_SIZE = 40
 
 FADE = True
+TTL = 10 * HEIGHT * WIDTH
 
 TEMP_START = 100.0
 TEMP_END = 0.01
@@ -62,8 +63,11 @@ for game in count():
 
     state = snake.sample_start_state()
     stats = GameStats()
+    score = 0
+    ttl = TTL
 
     while state:
+        sleep(1)
 
         display.draw(state.world, "training")
         display.update()
@@ -77,9 +81,19 @@ for game in count():
 
         # advance the environment and get reward
         reward = snake.reward(state, action)
-        score, next_state  = snake.next(state, action)
-        stats.push(score)
+        new_score, next_state  = snake.next(state, action)
+        stats.push(new_score)
         
+        # stop game after certain amount of steps without progress
+        if new_score > score:
+            score = new_score
+            ttl = TTL
+
+        if ttl <= 0:
+            reward = DEATH_REWARD
+            next_state = None
+        ttl -= 1
+
         # need convert all components of transition to torch tensors
         if next_state:
             next_state_tensor = torch.from_numpy(next_state.world).unsqueeze(0).unsqueeze(0).to(device)

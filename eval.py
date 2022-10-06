@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from statistics import median
 import sys
 import torch
+import numpy as np
 
 from dqn import CNN
 from snakeMDP import SnakeMDP
@@ -46,7 +47,7 @@ def main(argc, argv):
     print(f'min score: {min(scores)}')
     print(f'average score: {sum(scores) / len(scores)}')
 
-    plt.hist(scores, bins=max(scores) - min(scores) + 1)
+    plt.hist(scores, bins=np.linspace(min(scores) - .5, max(scores) + .5, max(scores) - min(scores) + 2))
     plt.show()
 
 

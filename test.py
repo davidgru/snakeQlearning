@@ -28,7 +28,7 @@ def test(policy_network, snake, display = None, delay = 0.0, ttl = 2000):
         
         with torch.no_grad():
             state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
-        action = softmax_policy(policy_network, state.world, 0.001)
+        action = softmax_policy(policy_network, state.world, 0.00001)
         # action = Action(policy_network(state_tensor).max(1)[1].view(1, 1).item())
 
         new_score, state = snake.next(state, action)
