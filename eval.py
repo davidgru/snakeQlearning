@@ -9,10 +9,10 @@ from snakeMDP import SnakeMDP
 from test import test
 
 # simulates specified number of games and returns a list of scores
-def simulate(policy_network, snake, iterations=0, ttl=2000, cb=None):
+def simulate(policy_network, snake, iterations=0, ttl=2000, cb=None, display=None):
     scores = []
     for i in range(iterations):
-        stats = test(policy_network, snake, ttl=ttl)
+        stats = test(policy_network, snake, ttl=ttl, display=display)
         scores.append(stats.score)
         if cb:
             cb(i, stats.score)
@@ -23,6 +23,7 @@ def main(argc, argv):
     if argc < 3:
         sys.exit(1)
 
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device('cpu')
     info = torch.load(argv[1], map_location=device)
 
