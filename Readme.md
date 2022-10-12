@@ -24,7 +24,11 @@ python test.py ./models/gregor.pt
 ```
 5. Train yourself
 ```
-python main.py
+python deep_q_learning.py
+```
+or
+```
+python policy_search.py
 ```
 
 # MDP
