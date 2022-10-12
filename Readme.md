@@ -73,8 +73,4 @@ The agent wasn't quite able to get an average score of 30/99 consistently. In a 
 
 I think the main problem is, that the agent has no memory, therefor it does not know how the snakes tail moves which hinders him in avoiding his own body.
 
-I trained a second model where the body doesn't have a constant value. The values of the body decrease linearly from `1` to `0`. The longer the body remains at this position the higher the value. In theory, the snake should have all information needed to beat the game. I trained for about 50h and the snake got to an average score of 35 which is still disappointing.
-
-![hmm learning curve](./resultsFade.png)
-
-You can run `hmm` with `python test.py models/hmm.pt`
+I trained a second model on a 6x6 grid where the body doesn't have a constant value. The values of the body decrease linearly from `1` to `0`. The longer the body remains at this position the higher the value. In theory, the snake should have all information needed to beat the game. On this smaller board the agent is able to beat the game `45%` of the time which I take as a win. You can run the model with `python test.py models/6x6.pt`.
