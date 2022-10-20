@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torch.distributions.categorical import Categorical
 
 
-from dqn import CNN
+from dqn import CNN, CNN2
 from display import Display
 from plot import GameStats, Plot
 from snakeMDP import SnakeMDP
@@ -115,18 +115,18 @@ def main():
     SAVE_INTERVAL = 200
     SAVE_DIR = "./save"
 
-    TTL = 10 * WIDTH * HEIGHT
+    TTL = (WIDTH * HEIGHT) ** 2
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = torch.device('cpu')
 
-    policy_network = CNN(HEIGHT, WIDTH, device).to(device)
+    policy_network = CNN2(HEIGHT, WIDTH, device).to(device)
     display = Display(HEIGHT, WIDTH, 40)
-    snake = SnakeMDP(HEIGHT, WIDTH, 1, -1, -0.01, fade=FADE)
+    snake = SnakeMDP(HEIGHT, WIDTH, 1, 0, 0, fade=FADE)
 
     plot = Plot(100)
 
-    optimizer = Adam(policy_network.parameters(), lr=0.0007)
+    optimizer = Adam(policy_network.parameters(), lr=0.0005)
 
     def callback(episode, policy_network, optimizer):
         if not os.path.exists(SAVE_DIR):
@@ -142,7 +142,7 @@ def main():
             }, os.path.join(SAVE_DIR, f'{episode}.pt'))
 
 
-    policy_search(snake, policy_network, optimizer, batch_size=10000, discount=0.95, ttl=TTL, cb=callback, plot=plot, display=display)
+    policy_search(snake, policy_network, optimizer, batch_size=500, discount=0.95, ttl=TTL, cb=callback, plot=plot, display=display)
 
 
 if __name__ == '__main__':

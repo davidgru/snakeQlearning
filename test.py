@@ -6,7 +6,6 @@ from time import sleep
 import torch
 
 from display import Display
-from dqn import CNN
 from plot import GameStats
 from snakeMDP import Action, SnakeMDP
 from exploration_strategy import softmax_policy
@@ -51,23 +50,21 @@ def main(argc, argv):
     if argc < 2:
         sys.exit(1)
 
-    device = torch.device('cpu')
-    info = torch.load(argv[1], map_location=device)
+    model = torch.jit.load(argv[1])
+    model.eval()
+
+    info = model.info()
 
     height = info['height']
     width = info['width']
-    fade = info['fade']
-
-
-    model = CNN(height, width, device).to(device)
-    model.load_state_dict(info['state_dict'])
-    model.eval()
+    fade = bool(info['fade'])
 
     snake = SnakeMDP(height, width, 0, 0, 0, fade=fade)
     
     display = Display(height, width, 40)
 
     test(model, snake, display, delay=0.25, ttl=2*height*width)
+
 
 if __name__ == '__main__':
     main(len(sys.argv), sys.argv)

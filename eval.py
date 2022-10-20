@@ -4,7 +4,6 @@ import sys
 import torch
 import numpy as np
 
-from dqn import CNN
 from snakeMDP import SnakeMDP
 from test import test
 
@@ -23,17 +22,15 @@ def main(argc, argv):
     if argc < 3:
         sys.exit(1)
 
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device('cpu')
-    info = torch.load(argv[1], map_location=device)
+    model = torch.jit.load(argv[1])
+    model.eval()
+
+    info = model.info()
 
     height = info['height']
     width = info['width']
-    fade = info['fade']
-
-    model = CNN(height, width, device).to(device)
-    model.load_state_dict(info['state_dict'])
-    model.eval()
+    fade = bool(info['fade'])
 
     snake = SnakeMDP(height, width, 0, 0, 0, fade=fade)
 

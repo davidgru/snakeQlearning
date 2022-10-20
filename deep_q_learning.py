@@ -1,5 +1,6 @@
 from itertools import count
 import math
+import os
 
 import torch
 from torch.nn import SmoothL1Loss
@@ -11,6 +12,7 @@ from exploration_strategy import softmax_policy
 from plot import GameStats, Plot
 from replay_buffer import ReplayMemory, Transition
 from snakeMDP import SnakeMDP
+from save import save
 
 
 
@@ -119,28 +121,29 @@ def deep_q_learning(snake, policy_network, target_network, optimizer, tmp_start,
 
 def main():
     
-    WIDTH = 6
-    HEIGHT = 6
+    WIDTH = 10
+    HEIGHT = 10
     FADE = True
 
     FOOD_REWARD = 1.0
-    LIVING_REWARD = -0.01
-    DEATH_REWARD = -1.0
+    LIVING_REWARD = 0.0
+    DEATH_REWARD = 0.0
 
     DISCOUNT_FACTOR = 0.95
     TTL = 10 * WIDTH * HEIGHT
-    TARGET_UPDATE_INTERVAL = 500
-    REPLAY_MEMORY_SIZE = 500000
+    TARGET_UPDATE_INTERVAL = 100
+    REPLAY_MEMORY_SIZE = 200000
 
     # parameters for softmax temperature
     TMP_START = 100.0
-    TMP_END = 0.01
-    TMP_DECAY = 700
+    TMP_END = 1e-6
+    TMP_DECAY = 250
 
-    LEARNING_RATE = 0.001
-    BATCH_SIZE = 512
+    LEARNING_RATE = 0.0001
+    BATCH_SIZE = 32
 
     SAVE_INTERVAL = 200
+    SAVE_DIR = 'save'
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -148,8 +151,8 @@ def main():
     display = Display(HEIGHT, WIDTH, 40)
 
     # create policy and target networks
-    policy_network = CNN(HEIGHT, WIDTH, device).to(device)
-    target_network = CNN(HEIGHT, WIDTH, device).to(device)
+    policy_network = CNN(HEIGHT, WIDTH, FADE, device).to(device)
+    target_network = CNN(HEIGHT, WIDTH, FADE, device).to(device)
     target_network.load_state_dict(policy_network.state_dict())
     target_network.eval()
 
@@ -158,16 +161,11 @@ def main():
     plot = Plot(20)
 
     def cb(_, game, policy_network, optimizer):
-        if game % SAVE_INTERVAL:
-            torch.save({
-                'width': WIDTH,
-                'height': HEIGHT,
-                'fade': FADE,
-                'state_dict': policy_network.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'game': game,
-            }, "./my_model.pt")
-
+        if not os.path.exists(SAVE_DIR):
+            os.mkdir(SAVE_DIR)
+        if game % SAVE_INTERVAL == 0:
+            save(policy_network, os.path.join(SAVE_DIR, f'{game}.pt'))
+    
     deep_q_learning(snake, policy_network, target_network, optimizer, TMP_START, TMP_END, TMP_DECAY, BATCH_SIZE, DISCOUNT_FACTOR, TARGET_UPDATE_INTERVAL, REPLAY_MEMORY_SIZE, TTL, plot, display, cb)
 
 
