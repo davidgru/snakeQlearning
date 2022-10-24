@@ -4,6 +4,7 @@ from time import sleep
 
 
 import torch
+from torch.distributions import Categorical
 
 from display import Display
 from plot import GameStats
@@ -11,7 +12,8 @@ from snakeMDP import Action, SnakeMDP
 from exploration_strategy import softmax_policy
 
 
-def test(policy_network, snake, display = None, delay = 0.0, ttl = 2000):
+@torch.no_grad()
+def test(policy_network, device, snake, display = None, delay = 0.0, ttl = 2000):
 
     state = snake.sample_start_state()
     stats = GameStats()
@@ -25,10 +27,14 @@ def test(policy_network, snake, display = None, delay = 0.0, ttl = 2000):
             display.draw(state.world, "testing")
             display.update()
         
-        with torch.no_grad():
-            state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0)
-        action = softmax_policy(policy_network, state.world, 0.00001)
-        # action = Action(policy_network(state_tensor).max(1)[1].view(1, 1).item())
+        state_tensor = torch.from_numpy(state.world).unsqueeze(0).unsqueeze(0).to(device)
+        
+        if policy_network.info()['critic']:
+            logits, _ = policy_network(state_tensor)
+            dist = Categorical(logits=logits)
+            action = Action(dist.sample().item())
+        else:
+            action = softmax_policy(policy_network, state.world, 0.00001)
 
         new_score, state = snake.next(state, action)
         stats.push(new_score)
@@ -50,7 +56,10 @@ def main(argc, argv):
     if argc < 2:
         sys.exit(1)
 
-    model = torch.jit.load(argv[1])
+    use_cuda = False
+    device = torch.device('cuda' if use_cuda else 'cpu')
+
+    model = torch.jit.load(argv[1]).to(device)
     model.eval()
 
     info = model.info()
@@ -63,7 +72,7 @@ def main(argc, argv):
     
     display = Display(height, width, 40)
 
-    test(model, snake, display, delay=0.25, ttl=2*height*width)
+    test(model, device, snake, display, delay=0.25, ttl=2*height*width)
 
 
 if __name__ == '__main__':

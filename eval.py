@@ -8,10 +8,10 @@ from snakeMDP import SnakeMDP
 from test import test
 
 # simulates specified number of games and returns a list of scores
-def simulate(policy_network, snake, iterations=0, ttl=2000, cb=None, display=None):
+def simulate(policy_network, device, snake, iterations=0, ttl=2000, cb=None, display=None):
     scores = []
     for i in range(iterations):
-        stats = test(policy_network, snake, ttl=ttl, display=display)
+        stats = test(policy_network, device, snake, ttl=ttl, display=display)
         scores.append(stats.score)
         if cb:
             cb(i, stats.score)
@@ -23,7 +23,7 @@ def main(argc, argv):
         sys.exit(1)
 
     device = torch.device('cpu')
-    model = torch.jit.load(argv[1])
+    model = torch.jit.load(argv[1]).to(device)
     model.eval()
 
     info = model.info()
@@ -37,7 +37,7 @@ def main(argc, argv):
     iterations = int(argv[2])
     cb = lambda i, score: print(f'simulated game {i}: {score}')
 
-    scores = simulate(model, snake, iterations, ttl=5*width*height, cb=cb)
+    scores = simulate(model, device, snake, iterations, ttl=5*width*height, cb=cb)
 
     print('-' * 100)
     print(f'max score: {max(scores)}')
