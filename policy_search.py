@@ -6,7 +6,7 @@ from torch.optim import Adam
 from torch.distributions.categorical import Categorical
 
 
-from dqn import CNN, CNN2
+from dqn import CNN
 from display import Display
 from plot import GameStats, Plot
 from snakeMDP import SnakeMDP
@@ -40,7 +40,7 @@ def play_game(snake, policy_network, discount, ttl = None, display = None):
         # sample action according to policy
         with torch.no_grad():
             logits = policy_network(state_tensor)
-            action_tensor = Categorical(logits=logits).sample()
+            action_tensor = Categorical(logits=logits).sample()#
             action = action_tensor.item()
 
         # add to trajectory
@@ -120,7 +120,7 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = torch.device('cpu')
 
-    policy_network = CNN2(HEIGHT, WIDTH, device).to(device)
+    policy_network = CNN(HEIGHT, WIDTH, FADE, device).to(device)
     display = Display(HEIGHT, WIDTH, 40)
     snake = SnakeMDP(HEIGHT, WIDTH, 1, 0, 0, fade=FADE)
 
