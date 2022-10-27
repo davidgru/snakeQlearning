@@ -141,17 +141,17 @@ def main():
     DEATH_REWARD = 0.0
 
     # Hyperparams
-    LR = 0.0002
-    NUM_STEPS = 16
-    MINIBATCH_SIZE = 4
-    EPOCHS = 1
+    LR = 0.00003
+    NUM_STEPS = 64
+    MINIBATCH_SIZE = 1
+    EPOCHS = 2
     GAMMA = 0.95 # discount factor
     TAU = 0.95 # TODO: What is it?
     EPSILON = 0.2 # ppo clip threshold
     TTL = 5 * HEIGHT * WIDTH
 
     USE_DISPLAY = False
-    PLOT_GRANULARITY = 1000
+    PLOT_GRANULARITY = 100
     SAVE_DIR = 'save'
     SAVE_INTERVAL = 1000
 

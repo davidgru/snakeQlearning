@@ -85,5 +85,5 @@ class Plot:
                 ax.plot(hist.max, label='Max', color='g')
                 ax.plot(hist.avg, label='Average', color='b')
                 ax.plot(hist.min, label='Min', color='r')
-            plt.pause(.01)
+            plt.pause(.1)
 
